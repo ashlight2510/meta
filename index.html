@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -9,6 +9,10 @@
     <meta
       name="description"
       content="Meta Kit: SEO 메타태그/OG/Twitter 카드/JSON-LD/파비콘/OG 이미지(캔버스) 생성기"
+    />
+    <meta
+      name="keywords"
+      content="SEO Generator, OG Tags, Meta Kit, Favicon Builder, JSON-LD"
     />
     <meta name="robots" content="noindex, nofollow" />
     <link rel="canonical" href="https://meta.funnyfunny.cloud/" />
@@ -37,6 +41,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1204894220949193"
      crossorigin="anonymous"></script>
+  <script src="/seo-helper.js"></script>
     <!-- responsive-base -->
     <style>
       /* responsive-base */
@@ -423,6 +428,8 @@
           metaTitle: "Meta Kit - SEO/OG 생성기",
           metaDescription:
             "Meta Kit: SEO 메타태그/OG/Twitter 카드/JSON-LD/파비콘/OG 이미지(캔버스) 생성기",
+          metaKeywords:
+            "SEO 생성기, OG 메타, JSON-LD, 파비콘, 메타 키트",
           metaOgTitle: "Meta Kit",
           metaOgDescription:
             "한 페이지에서 메타태그, 파비콘, OG 이미지를 한 번에 생성하세요.",
@@ -475,6 +482,8 @@
           metaTitle: "Meta Kit - SEO & OG Generator",
           metaDescription:
             "Meta Kit: Generate SEO tags, OG/Twitter cards, JSON-LD, favicons, and OG images in one place.",
+          metaKeywords:
+            "SEO Generator, OG Tags, JSON-LD, Favicon Studio, Meta Kit",
           metaOgTitle: "Meta Kit",
           metaOgDescription:
             "Generate meta tags, favicons, and OG images in one place.",
@@ -526,7 +535,14 @@
         },
       };
 
-      let currentLang = "ko";
+      const defaultLang = "en";
+      const supportedLangs = ["ko", "en"];
+      const canonicalBase = "https://meta.funnyfunny.cloud/";
+      const keywordsByLang = {
+        ko: translations.ko.metaKeywords,
+        en: translations.en.metaKeywords,
+      };
+      let currentLang = defaultLang;
 
       function t(key, vars = {}) {
         const langTable = translations[currentLang] || translations.ko;
@@ -559,10 +575,17 @@
         document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
           el.setAttribute("placeholder", t(el.dataset.i18nPlaceholder));
         });
+        SeoHelper.applySeoSettings({
+          lang: currentLang,
+          keywordsByLang,
+          supportedLangs,
+          defaultLang,
+          canonicalBase,
+        });
       }
 
       function setLang(lang, options = {}) {
-        const nextLang = translations[lang] ? lang : "ko";
+        const nextLang = translations[lang] ? lang : defaultLang;
         currentLang = nextLang;
         document.documentElement.lang = nextLang;
         localStorage.setItem("preferredLang", nextLang);
@@ -578,14 +601,31 @@
         }
       }
 
+      function getRegionPreferredLang(fallback = defaultLang) {
+        const intlLocale =
+          typeof Intl === "object" && typeof Intl.DateTimeFormat === "function"
+            ? Intl.DateTimeFormat().resolvedOptions().locale
+            : "";
+        const sources = [
+          ...(navigator.languages || []),
+          navigator.language,
+          navigator.userLanguage,
+          intlLocale,
+        ]
+          .filter(Boolean)
+          .map((locale) => locale.toLowerCase());
+        const hasKorean = sources.some((locale) => locale.startsWith("ko"));
+        return hasKorean ? "ko" : fallback;
+      }
+
       function detectLang() {
         const params = new URLSearchParams(window.location.search);
         const paramLang = params.get("lang");
-        if (translations[paramLang]) return paramLang;
+        if (supportedLangs.includes(paramLang)) return paramLang;
         const stored = localStorage.getItem("preferredLang");
-        if (translations[stored]) return stored;
-        const browser = navigator.language?.toLowerCase() || "";
-        return browser.startsWith("en") ? "en" : "ko";
+        if (supportedLangs.includes(stored)) return stored;
+        const candidate = getRegionPreferredLang(defaultLang);
+        return supportedLangs.includes(candidate) ? candidate : defaultLang;
       }
 
       document.querySelectorAll(".lang-switch button").forEach((button) => {
