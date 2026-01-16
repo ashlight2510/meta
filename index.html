@@ -1070,22 +1070,16 @@ ${JSON.stringify(jsonLd, null, 2)}
         });
       });
 
-      // initial draw - hide placeholder when canvas is drawn
+      // Wrap generate to hide placeholder
       const ogCanvasPlaceholder = document.getElementById("ogCanvasPlaceholder");
-      function hidePlaceholder() {
-        if (ogCanvasPlaceholder) ogCanvasPlaceholder.style.display = "none";
-      }
-      
-      // Override generate to hide placeholder
-      const originalGenerate = generate;
+      const originalGenerateFunc = generate;
       generate = function() {
-        originalGenerate();
-        hidePlaceholder();
+        originalGenerateFunc();
+        if (ogCanvasPlaceholder) ogCanvasPlaceholder.style.display = "none";
       };
       
       // Initial generate
       generate();
-      hidePlaceholder();
     </script>
   
 <ins class="adsbygoogle"
